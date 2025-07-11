@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Video Studio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="animated-bg"></div>
+    
+    <!-- Navigation -->
+    <nav class="navbar navbar-dark glass-effect">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1 glow-text">
+                <i class="bi bi-stars"></i> AI Video Studio
+            </span>
+            <div>
+                <button class="btn btn-outline-light btn-sm me-2" onclick="showSetup()">
+                    <i class="bi bi-gear"></i> Setup
+                </button>
+                <button class="btn btn-outline-light btn-sm" onclick="showInstructions()">
+                    <i class="bi bi-question-circle"></i> Help
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- First Time Setup Modal -->
+        <div id="firstTimeSetup" class="modal-overlay" style="display: none;">
+            <div class="setup-wizard">
+                <h2 class="text-center mb-4 glow-text">
+                    <i class="bi bi-magic"></i> Welcome to AI Video Studio
+                </h2>
+                <p class="text-center mb-4">Let's get you set up in 2 minutes!</p>
+                
+                <div class="setup-steps">
+                    <div class="step-card glass-card">
+                        <h5><i class="bi bi-1-circle-fill text-primary"></i> API Keys</h5>
+                        <p class="small text-muted">Enter your API keys (they're saved locally)</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Grok API Key</label>
+                            <input type="password" class="form-control" id="setupGrokKey" 
+                                   placeholder="xai-...">
+                            <small class="text-muted">
+                                1. Go to <a href="https://console.x.ai" target="_blank">console.x.ai</a><br>
+                                2. Sign up or log in<br>
+                                3. Click "API Keys" → "Create API Key"<br>
+                                4. Copy the key (starts with <code>xai-</code>)
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">FAL API Key</label>
+                            <input type="password" class="form-control" id="setupFalKey" 
+                                   placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx:...">
+                            <small class="text-muted">
+                                1. Go to <a href="https://fal.ai/dashboard" target="_blank">fal.ai/dashboard</a><br>
+                                2. Sign up for free account<br>
+                                3. Click "API Keys" in sidebar<br>
+                                4. Create new key and copy it<br>
+                                <span class="text-info">ℹ️ We're using Google Veo 3 model via FAL</span>
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card glass-card">
+                        <h5><i class="bi bi-2-circle-fill text-primary"></i> Google Sheets (Optional)</h5>
+                        <p class="small text-muted">For topic queue management</p>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Spreadsheet ID</label>
+                            <input type="text" class="form-control" id="setupSheetId" 
+                                   placeholder="1hADNv4Pd_Ikr2SUy8eg_GpcX1cMi_YjIdpAJzLIpeGQ">
+                            <div class="alert alert-secondary small mt-2">
+                                <strong>Option 1: Use our template (Recommended)</strong><br>
+                                1. <a href="https://docs.google.com/spreadsheets/d/1hADNv4Pd_Ikr2SUy8eg_GpcX1cMi_YjIdpAJzLIpeGQ/copy" target="_blank" class="text-warning">
+                                   Click here to copy the Video Automation template</a><br>
+                                2. It will create your own copy with the correct tabs<br>
+                                3. Look at your new sheet's URL<br>
+                                4. Copy the ID between <code>/d/</code> and <code>/edit</code><br>
+                                <br>
+                                <strong>Option 2: Create your own sheet</strong><br>
+                                1. Go to <a href="https://sheets.new" target="_blank">sheets.new</a> to create a blank sheet<br>
+                                2. Create two tabs (sheets):<br>
+                                   • <strong>Topics</strong> tab with columns: ID | Status | Topic<br>
+                                   • <strong>Published</strong> tab with columns: ID | Topic | Title | Video URL | Published Date | Views<br>
+                                3. Share the sheet with: <code>admin-507@video-465521.iam.gserviceaccount.com</code><br>
+                                4. Copy your Spreadsheet ID from the URL<br>
+                                <br>
+                                <strong>Where to find the ID:</strong><br>
+                                URL format: <code>https://docs.google.com/spreadsheets/d/<span class="text-warning">SPREADSHEET_ID</span>/edit</code><br>
+                                Example ID: <code class="text-warning">1hADNv4Pd_Ikr2SUy8eg_GpcX1cMi_YjIdpAJzLIpeGQ</code>
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-info small">
+                            <i class="bi bi-info-circle"></i> Skip this if you just want to generate videos directly (videos will still work!)
+                        </div>
+                    </div>
+                    
+                    <div class="step-card glass-card">
+                        <h5><i class="bi bi-3-circle-fill text-primary"></i> YouTube (Optional)</h5>
+                        <p class="small text-muted">For automatic uploads</p>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="setupYoutube" onchange="toggleYoutubeFields()">
+                            <label class="form-check-label">
+                                Enable YouTube uploads
+                            </label>
+                        </div>
+                        
+                        <div id="youtubeFields" style="display: none;">
+                            <div class="mb-3">
+                                <label class="form-label">YouTube Client Secrets JSON</label>
+                                <textarea class="form-control" id="youtubeClientSecrets" rows="4" 
+                                          placeholder='Paste your entire client_secrets.json content here (starts with {"installed":{"client_id":...})'></textarea>
+                                <div class="alert alert-secondary small mt-2">
+                                    <strong>How to get YouTube credentials:</strong><br>
+                                    1. Go to <a href="https://console.cloud.google.com" target="_blank">Google Cloud Console</a><br>
+                                    2. Create a new project (or select existing)<br>
+                                    3. Click <strong>"Enable APIs and Services"</strong><br>
+                                    4. Search for <strong>"YouTube Data API v3"</strong> and Enable it<br>
+                                    5. Go to <strong>"Credentials"</strong> in the left menu<br>
+                                    6. Click <strong>"+ Create Credentials"</strong> → <strong>"OAuth client ID"</strong><br>
+                                    7. If prompted, configure consent screen:<br>
+                                    &nbsp;&nbsp;&nbsp;• Choose "External"<br>
+                                    &nbsp;&nbsp;&nbsp;• Fill app name (any name)<br>
+                                    &nbsp;&nbsp;&nbsp;• Add your email<br>
+                                    &nbsp;&nbsp;&nbsp;• Save<br>
+                                    8. For Application type, choose <strong>"Desktop app"</strong><br>
+                                    9. Name it (e.g., "Video Automation")<br>
+                                    10. Click Create, then <strong>Download JSON</strong><br>
+                                    11. Open the downloaded file and <strong>copy ALL contents</strong><br>
+                                    12. Paste everything here
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info small">
+                                <i class="bi bi-info-circle"></i> <strong>First time only:</strong> A browser window will open to authorize YouTube access when you create your first video. Log in with your YouTube account.
+                            </div>
+                            
+                            <div class="alert alert-warning small">
+                                <i class="bi bi-shield-check"></i> Your credentials are stored locally on your computer only
+                            </div>
+                        </div>
+                        
+                        <div class="alert alert-warning small mt-2">
+                            <i class="bi bi-exclamation-triangle"></i> Leave unchecked to save videos locally only
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <button class="btn btn-primary btn-lg glow-button" onclick="saveSetup()">
+                        <i class="bi bi-rocket-takeoff"></i> Start Creating!
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Panel: Create Video -->
+            <div class="col-lg-7">
+                <div class="card glass-card mb-4">
+                    <div class="card-body">
+                        <h4 class="glow-text mb-4">
+                            <i class="bi bi-camera-reels"></i> Create Video
+                        </h4>
+                        
+                        <!-- Topic Input -->
+                        <div class="create-section">
+                            <div class="form-floating mb-3">
+                                <input type="text" class="form-control" id="quickTopic" 
+                                       placeholder="Enter your topic">
+                                <label>What should the video be about?</label>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button class="btn btn-lg glow-button" onclick="generateVideo()">
+                                    <i class="bi bi-stars"></i> Generate Video
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Progress Display -->
+                        <div id="progressSection" class="progress-section" style="display: none;">
+                            <div class="progress-card">
+                                <div class="progress-animation">
+                                    <div class="pulse-loader"></div>
+                                </div>
+                                <h5 id="progressText" class="mt-3">Initializing...</h5>
+                                <div class="progress mt-3">
+                                    <div id="progressBar" class="progress-bar progress-bar-animated" 
+                                         style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Result Display -->
+                        <div id="resultSection" style="display: none;">
+                            <div class="result-card" id="resultCard">
+                                <div class="result-icon">
+                                    <i class="bi bi-check-circle-fill text-success" style="font-size: 3rem;"></i>
+                                </div>
+                                <h5 id="resultTitle" class="mt-3"></h5>
+                                <p id="resultMessage"></p>
+                                <div class="mt-3">
+                                    <a id="resultLink" href="#" target="_blank" class="btn btn-success me-2" 
+                                       style="display: none;">
+                                        <i class="bi bi-youtube"></i> View on YouTube
+                                    </a>
+                                    <button class="btn btn-outline-light" onclick="resetForm()">
+                                        <i class="bi bi-arrow-repeat"></i> Create Another
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Templates -->
+                <div class="card glass-card">
+                    <div class="card-body">
+                        <h5 class="mb-3">
+                            <i class="bi bi-lightning-charge"></i> Quick Ideas
+                        </h5>
+                        <div class="template-grid">
+                            <button class="template-btn" onclick="setTopic('Claude Code explains recursion with visual examples')">
+                                <i class="bi bi-arrow-repeat"></i>
+                                <span>Recursion</span>
+                            </button>
+                            <button class="template-btn" onclick="setTopic('5 Python tricks that will blow your mind')">
+                                <i class="bi bi-code-slash"></i>
+                                <span>Python Tips</span>
+                            </button>
+                            <button class="template-btn" onclick="setTopic('How AI is revolutionizing coding in 2025')">
+                                <i class="bi bi-robot"></i>
+                                <span>AI Coding</span>
+                            </button>
+                            <button class="template-btn" onclick="setTopic('Build a website in 60 seconds with Claude Code')">
+                                <i class="bi bi-globe"></i>
+                                <span>Web Dev</span>
+                            </button>
+                            <button class="template-btn" onclick="setTopic('The most satisfying code refactoring ever')">
+                                <i class="bi bi-magic"></i>
+                                <span>Refactoring</span>
+                            </button>
+                            <button class="template-btn" onclick="setTopic('Git commands that will save your life')">
+                                <i class="bi bi-git"></i>
+                                <span>Git Tips</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Panel: Stats & History -->
+            <div class="col-lg-5">
+                <!-- Stats -->
+                <div class="card glass-card mb-3">
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <h3 class="glow-text" id="totalVideos">0</h3>
+                                    <small>Videos Created</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <h3 class="glow-text" id="totalViews">0</h3>
+                                    <small>Total Views</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="stat-box">
+                                    <h3 class="glow-text" id="todayVideos">0</h3>
+                                    <small>Today</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Videos -->
+                <div class="card glass-card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="bi bi-clock-history"></i> Recent Creations
+                            <button class="btn btn-sm btn-outline-light float-end" onclick="loadRecentVideos()">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </h5>
+                    </div>
+                    <div class="card-body recent-videos-container">
+                        <div id="recentVideosList">
+                            <div class="text-center text-muted">
+                                <i class="bi bi-film"></i> No videos yet
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructions Modal -->
+    <div class="modal fade" id="instructionsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content glass-card">
+                <div class="modal-header">
+                    <h5 class="modal-title glow-text">
+                        <i class="bi bi-book"></i> How to Use AI Video Studio
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="instructions-content">
+                        <h6>🚀 Quick Start</h6>
+                        <ol>
+                            <li>Enter a topic or select a template</li>
+                            <li>Click "Generate Video"</li>
+                            <li>Wait ~1 minute for your video</li>
+                            <li>View on YouTube or download locally</li>
+                        </ol>
+                        
+                        <h6 class="mt-4">🔑 Getting API Keys</h6>
+                        <ul>
+                            <li><strong>Grok API:</strong> Sign up at <a href="https://console.x.ai" target="_blank">console.x.ai</a> → API Keys → Create API Key</li>
+                            <li><strong>FAL API:</strong> Sign up at <a href="https://fal.ai/dashboard" target="_blank">fal.ai/dashboard</a> → API Keys (free tier available)</li>
+                            <li><strong>YouTube (Optional):</strong> Follow the detailed steps in the setup wizard</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">📺 YouTube Setup Tips</h6>
+                        <ul>
+                            <li>Choose <strong>"Desktop app"</strong> as the application type (not Web application)</li>
+                            <li>The JSON file should start with <code>{"installed":{"client_id":...</code></li>
+                            <li>You'll authorize once per computer - the app remembers your login</li>
+                            <li>Make sure you have a YouTube channel created first</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">💡 Tips</h6>
+                        <ul>
+                            <li>Keep topics concise (8-second videos work best with single concepts)</li>
+                            <li>Use descriptive language for better visuals</li>
+                            <li>Try templates for inspiration</li>
+                        </ul>
+                        
+                        <h6 class="mt-4">⚡ Costs</h6>
+                        <p><strong>Google Veo 3 via FAL:</strong> ~$0.75/second = $6 per 8-second video<br>
+                        <strong>Grok API:</strong> ~$0.10 per script<br>
+                        <strong>Total:</strong> ~$6.10 per video</p>
+                        
+                        <h6 class="mt-4">🎬 About the Tech</h6>
+                        <ul>
+                            <li><strong>Grok 3:</strong> Latest AI model from X.AI for intelligent script writing</li>
+                            <li><strong>Google Veo 3:</strong> State-of-the-art video generation (via FAL platform)</li>
+                            <li><strong>Model:</strong> <code>fal-ai/veo3/fast</code> - optimized for quality</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
